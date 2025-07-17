@@ -21,15 +21,27 @@ Packages needed are:
 - sklearn for machine learning & machine-learning pipeline related functions
 
 ## Findings
-![heatmap_features]()
+
+All statistical tests were conducted at a significance level of α = 0.05, corresponding to 95 % confidence for interval estimates.
+
+![Gender BMI](plots/gender_bmi.png)
+There was no statistical difference between each gender's average BMI (p-value = 0.09). The t-value of the T-test was found that the average male BMI was 1.7 standard errors greater than the average female BMI.
 
 
-![price_correlation graph]()
+![smoker vs non-smokers Charges](plots/smoker_v_non_charges.png)
+After performing a t-test, it was found that smokers were charged significantly more than non-smokers (p-value = 8.27e-283). The t-value showed that smokers were charged 46.66 stadard errors greater than non-smokers.
 
 
-![explained variance]()
+![female BMI vs number of children (<= 2 children)](plots/fBMI_v_numChildren.png)
+This is a box plot that shows women grouped by number of children and compared their average BMI's. It was found that the number of children (<= 2 children) didn't have a statistical significance on the woman's BMI (p-value: 0.72). The p-value was run using an Ordinary Least Squares model and created an ANOVA table.
 
+| Source       | df   | Sum Sq   | Mean Sq  | F        | p-value |
+|--------------|------|----------|----------|----------|---------|
+| C(children)  | 2    | 24.59    | 12.30    | 0.334    | 0.716   |
+| Residual     | 563  | 20 695.66| 36.76    | —        | —       |
 
+![smokers per region](plots/smokers_per_region.png)
+This bar chart depicts the number of smokers to non-smokers per region. After performing a chi square test it was found that there was no statistical difference in the proportion of smokers:non-smokers per region (p-value: 0.06)
 
 ## Set up venv
 Create the virtual environment to download needed packages

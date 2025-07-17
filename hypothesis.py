@@ -106,9 +106,9 @@ if not utils.check_asset_exists(path):
 result = stats.ttest_ind(smoker_charges, non_charges)
 print(result)
 # Extract ttest value
-t_val2 = result.statistic
+t_val2 = result.statistic # type: ignore
 # Extract pValue 
-p_val2 = result.pvalue
+p_val2 = result.pvalue # type: ignore
 # Remember that we are asking if smokers pay more. So we are looking in the rightward distribution
 # Compared to bmi where we just cared if there is a difference. Here we want to know if group A (smokers) pay s more than group B
 """
@@ -124,4 +124,47 @@ else:
     print(f"Conclusion: pvalue of {p_val2_oneTail:.2f} > alpha for singleTail {a:.2f}")
     print(f"Accept the null, reject alt. There is no difference in charges between smokers and non-smokers")
 
+# Compare BMI of women with no children, one child, two children
+f_children = female.loc[female['children'] <= 2]
+print(f"f_child\n{f_children.head()}")
+print(f"counts\n{f_children['children'].value_counts().sort_index()}")
+grouped_f_children = f_children.groupby('children')['bmi'].mean()
+print(grouped_f_children)
+plt.close('all')
+sns.boxplot(x="children", y="bmi", data=f_children).set(title="Female BMI vs Number of Children (<= 2)")
+path = "plots/fBMI_v_numChildren.png"
+if not utils.check_asset_exists(path):
+    utils.savePlot(path)
 
+# Construct ANOVA table to check each groups count (0-2 children) against BMI values. 
+# ANOVA answers: Does average BMI look different for women with differring num of children
+# Ordinary Least Squares (ols) for estimation of unknown parameters
+formula = 'bmi ~ C(children)' # bmi is what is being explained. C(children): treats number of kids a different groups
+model = ols(formula, f_children).fit()
+aov_table = anova_lm(model)
+print(f"ANOVA Table\n{aov_table}") # PR(>F) == p-value > 0.05
+
+# Determine if portion of smokers is significantly different across regions
+'''
+    Null: Smokers proportions not different 
+    H1: Smokers proportions are different
+    Comparing 2 categorical groups --> Chi-square test
+'''
+
+contingency = pd.crosstab(data.region, data.smoker)
+print(contingency)
+
+# Plot distribution of non-smokers/smokers across 4 different regions
+contingency.plot(kind="bar", ylabel="Number of people")
+path = "plots/smokers_per_region.png"
+if not utils.check_asset_exists(path):
+    utils.savePlot(path)
+
+# perform chi-square, p-val,degrees of freedom, expected frequencies through chi2_contingency()
+chi_res = chi2_contingency(contingency, correction=False)
+print(f"chi test res\n {chi_res}")
+
+if chi_res.pvalue < a: # type: ignore
+    print(f"Reject the null. p-val: {chi_res.pvalue:.2f} is  < 0.05. \n There's a significant difference in smoker proportions across the various regions")# type: ignore
+else:
+    print(f"Accept the null. p-val: {chi_res.pvalue:.2f} is > 0.05. \nThere's no difference in smoker proportion across the regions")# type: ignore
