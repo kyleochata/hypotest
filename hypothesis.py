@@ -1,0 +1,127 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.stats as stats
+from scipy.stats import chi2_contingency
+from statsmodels.formula.api import ols
+from statsmodels.stats.anova import anova_lm
+import utils
+
+
+URL = 'https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBM-ML0232EN-SkillsNetwork/asset/insurance.csv'
+utils.new_dir("data")
+utils.download(URL, "data/insurance.csv")
+
+data = pd.read_csv('data/insurance.csv')
+print(data.head())
+
+d_info = data.info()
+print(d_info)
+print(f"describe raw data\n {data.describe()}")
+columns = data.columns.to_list()
+print(f"cols: {columns}")
+
+# Charges will be the response variable 
+# age, sex, bmi, children, smoker, region = predictor variables.
+# Examine how predictors influence charges
+# 1: Choose sample statistic
+# Prove (or disprove) that bmi of females is different from males
+# Check pop mean for BMI of male to pop mean for BMI for female
+
+#2: Define hypothesis
+# Null = BMI of male and BMI of female have no diff
+# H1 = difference between BMI's of genders
+
+#3: Set Decision Criteria
+# two-tailed test at 5% significance level: 0.025 for each tail. If p-val is less than alpha (0.025) reject the null
+# t-test: test the mean of one pop against standard or comparing the means of 2 pops if std dev is not known / limited sample size (n < 30).
+    # if std dev is known use z-test rather than t-test
+# z-test: test the mean of apop vs a standard or compare the means of 2 pops with large samples regardless of if std dev is known.
+    # Able to test portion of some characteristic vs a standard population or comparing the proportions of 2 pops
+# f-test: compare variance b/w 2 pops. Samples of any size. ANOVA
+# chi-squared test: determine wheter there's a statistically significant diff b/w the expected and observed frequrencies in categories of a contingency table
+    #Contingency table - tabular representation of categorical data. Frequency distribution of the variables
+
+#4: Evaluate and interpret results
+
+female = data.loc[data["sex"] == "female"]
+male = data.loc[data["sex"] == "male"]
+# single column selection in a DataFrame returns a Series
+f_bmi = female["bmi"]
+m_bmi = male["bmi"]
+#plot distribution of 'bmi' values b/w male and female. Expects a DataFrame 
+sns.displot(
+    data=data,
+    x='bmi',
+    hue='sex',
+    kind='kde',
+    palette={'female': 'green', 'male': 'blue'}
+)
+utils.new_dir("plots")
+path = "plots/gender_bmi.png"
+if not utils.check_asset_exists(path):
+    utils.savePlot(path)
+
+f_mean_bmi = f_bmi.mean()
+m_mean_bmi = male.bmi.mean()
+print(f"f_m_bmi: {f_mean_bmi}\tm_m_bmi: {m_mean_bmi}")
+
+# Calculate t-value & p-value
+a = 0.05
+t_val1, p_val1 = stats.ttest_ind(m_bmi, f_bmi)
+print(f"t1: {t_val1}\tp1: {p_val1}")
+print("P-Value Evaluation")
+if p_val1 < a: # type: ignore
+    print(f"Conclusion: p_val is {p_val1:.2f} is less than alpha {a}\n Reject the null. There is a difference in BMI for gender")
+else:
+    print(f"Conclusion: p-val: {p_val1:.2f} is greater than alpha: {a}\n Accept the null that there's no difference of BMI between genders.")
+print("T-Test Evaluation")
+if t_val1 > 0: # type: ignore
+    print(f"The male mean bmi of {m_mean_bmi:.2f} is about {t_val1:.2f} standard errors GREATER than the female mean BMI of {f_mean_bmi:.2f}")
+else:
+    print(f"The male mean bmi of {m_mean_bmi:.2f} is about {t_val1:.2f} standard errors SMALLER than the female mean BMI of {f_mean_bmi:.2f}")
+
+# Prove that medical claims made by people who smoke are greater than those who don't
+smoker = data.loc[data["smoker"]=='yes']
+smoker_charges = smoker["charges"]
+non_smoker = data.loc[data["smoker"]=='no']
+non_charges = non_smoker["charges"]
+
+# Null: average charges of smokers <= non_smokers
+#H1: average charges of smokers > non_smokers
+# t-test to compare means of smokeing and non_smoking
+sch_mean = smoker_charges.mean()
+print(f"sch_mean: ${sch_mean:.2f}")
+nch_mean = non_charges.mean()
+print(f"nch_mean: ${nch_mean:.2f}")
+
+sns.boxplot(x=data.charges, y=data.smoker, data=data).set(title="Fig: Smoker vs Charges")
+plt.xlabel("charges")
+plt.ylabel("Smoker")
+path = "plots/smoker_v_non_charges.png"
+if not utils.check_asset_exists(path):
+    utils.savePlot(path)
+
+result = stats.ttest_ind(smoker_charges, non_charges)
+print(result)
+# Extract ttest value
+t_val2 = result.statistic
+# Extract pValue 
+p_val2 = result.pvalue
+# Remember that we are asking if smokers pay more. So we are looking in the rightward distribution
+# Compared to bmi where we just cared if there is a difference. Here we want to know if group A (smokers) pay s more than group B
+"""
+    Two-tailed: “Is there any difference?” → we split the 5 % risk into two 2.5 % tails so we can catch the difference whichever direction it goes.
+    One-tailed: “I already assume group A is bigger (or smaller).” → we put the whole 5 % risk in one tail; if we land in that single 5 % slice, we say “yes, the difference is significant in the direction I predicted.” 
+"""
+p_val2_oneTail = p_val2 / 2
+
+if p_val2_oneTail < a:
+    print(f"Conclusion: pvalue of {p_val2_oneTail:.2f} < alpha for singleTail {a:.2f}")
+    print(f"Reject the null. There is a stat significant difference that smokers are charged more")
+else: 
+    print(f"Conclusion: pvalue of {p_val2_oneTail:.2f} > alpha for singleTail {a:.2f}")
+    print(f"Accept the null, reject alt. There is no difference in charges between smokers and non-smokers")
+
+

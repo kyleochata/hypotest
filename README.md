@@ -1,9 +1,14 @@
 # hypotest
 ibm hypothesis 
 
+Leveraging customer information is important for most businesses. This project is to practice hypothesis testing to help decide, using statistical evidence, a certain effect of an attribute or a combination of attributes on insurance claims. This is to highlight the imoprtance of the inital steps of decision making before buildingteh prediction models and classifiers.
 
 Concepts Touched:
-- 
+- Understand the elements of hypothesis testing:
+    - choose a sample statistic
+    - Define hypothesis
+    - Set the decision criteria
+    - Evaluate and interpret results
 
 Packages needed are:
 - reqeusts for data fetching 
@@ -11,7 +16,8 @@ Packages needed are:
 - numpy for math operations
 - seaborn for data visualization
 - matplotlib for data visualization
-- plotly.express for data visualization 
+- plotly.express for data visualization
+- statsmodels for statistical analysis
 - sklearn for machine learning & machine-learning pipeline related functions
 
 ## Findings
